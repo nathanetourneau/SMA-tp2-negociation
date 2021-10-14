@@ -1,31 +1,60 @@
+import numpy as np
+import random
+
+random.seed(1)
+
+comportements = {"intransigeant": 0.05, "modere": 0.15, "laxiste": 0.30}
+
+
+class Environment:
+    def __init__(self):
+        self.fournisseurs = None  # dict
+        self.negociateurs = None  # dict
+        self.deals = None  # np.array
+
+
+class Offres:
+    def __init__(self, id, negociateur_id, fournisseur_id, prix):
+        self.id = id
+        self.fournisseur_id = fournisseur_id
+        self.negociateur_id = negociateur_id
+        self.prix = prix
+        self.deal = False
+
+    def update(self, nouveau_prix: float, deal: bool):
+        self.prix = nouveau_prix
+        self.deal = deal
+
+
 class Fournisseur:
-    def __init__(self, offre: dict, prix_min, taux_decroissance):
-        self.type = offre["type"]
-        self.date_max = offre["date_max_vente"]
-        self.date_depart = offre["date_depart"]
-        self.lieu_depart = offre["lieu_depart"]
-        self.lieu_arrivee = offre["lieu_arrivee"]
+    def __init__(self, prix_min):
         self.prix_min = prix_min
-        self.taux_decroissance = taux_decroissance
+        self.comportement = random.choice(list(comportements.keys()))
+        self.nb_max_rounds = random.randrange(10, 20)
+        self.critere_acceptation = 
 
     def is_satisfied(self, prix):
         return self.prix_min < prix
 
-    def baisse_exigence(self):
-        self.prix_min *= 1 - self.taux_decroissance
+    def update_comportement(self, nouveau_prix):
+        delta_prix =  nouveau_prix - self.prix_min
+        if delta_prix > 0:
+            threshold_comportement= delta_prix/self.prix_min
+            if 0 < threshold_comportement < 5
+
+
+
+    def baisse_exigence(self, prix):
+        taux_decroissance = comportements[self.comportement]
+        self.prix_min *= (1 - taux_decroissance) * (prix - self.prix_min)
 
 
 class Negociateur:
-    def __init__(self, demande: dict, prix_max, nb_offres_max, taux_croissance):
-        self.type = demande["type"]
-        self.prix = demande["prix"]
-        self.date_max = demande["date_max_vente"]
-        self.date_depart = demande["date_depart"]
-        self.lieu_depart = demande["lieu_depart"]
-        self.lieu_arrivee = demande["lieu_arrivee"]
+    def __init__(self, prix, prix_max, nb_offres_max, taux_croissance):
+        self.comportement = random.choice(list(comportements.keys()))
+        self.nb_max_rounds = random.randrange(10, 20)
+        self.prix = prix
         self.prix_max = prix_max
-        self.nb_offres_max = nb_offres_max
-        self.taux_croissance = taux_croissance
         self.nb_offres = 0
 
     def is_satisfied(self):
@@ -41,6 +70,19 @@ class Negociateur:
 
 
 def main():
+
+    env = Environment()
+    env.fournisseurs = {}
+    env.negociateurs = {}
+    env.deals = np.zeros((len(env.fournisseurs), len(env.negociateurs)))
+
+    nb_rounds = 10
+    for round in nb_rounds:
+        for fournisseur in env.fournisseurs:
+            pass
+        for negociateur in env.fournisseurs:
+            pass
+
     negociateur = Negociateur(
         {
             "type": "avion",
@@ -66,8 +108,6 @@ def main():
         taux_decroissance=0.1,
     )
 
-    nb_rounds = 10
-
     for round in range(nb_rounds):
         if negociateur.imbroglio():
             return f"Echec de la négociation : {negociateur.nb_offres} offres effectuées, sans accord, nb_rounds =  {round}"
@@ -80,5 +120,6 @@ def main():
 
 
 if __name__ == "__main__":
+
     rv = main()
     print(rv)

@@ -3,25 +3,23 @@ import random
 
 from environnement import Environnement
 from offre import Offre
-from agent import Negociateur, Fournisseur
+from agent import Negociateur, Fournisseur, NB_NEGOCIATEURS, NB_FOURNISSEURS
 from strategies import *
 
-random.seed(1)
+# random.seed(1)
 
 comportements = {"intransigeant": 0.05, "modere": 0.15, "laxiste": 0.30}
 
 # random.choice(list(comportements.keys()))
 
 
-def main():
+def main(NB_FOURNISSEURS, NB_NEGOCIATEURS):
 
     env = Environnement()
 
     # TODO : instancier les agents/offres avec une boucle et un peu d'aléatoire
 
-    NB_ROUNDS = 25
-    NB_FOURNISSEURS = 5
-    NB_NEGOCIATEURS = 5
+    NB_ROUNDS = 5
 
     # TODO: initialiser les offres, les négociateurs et les fournisseurs
     env.liste_fournisseurs = [
@@ -40,7 +38,8 @@ def main():
             c += 1
 
     ########
-    for round in range(1):
+    for round in range(NB_ROUNDS):
+        print(f"----------------------- ROUND {round} -----------------------")
         for negociateur in env.liste_negociateurs:
             if not negociateur.deal:
                 offres_negociateur = [
@@ -50,38 +49,37 @@ def main():
                 ]
                 for offre in offres_negociateur:
                     nouveau_prix = offre.prix
-                    prix_offre = negociateur.run(
-                        round, offre.fournisseur_id, nouveau_prix
-                    )
-                    print(
-                        f"Negociateur {negociateur.id} a proposé {prix_offre:0.1f} pour offre {offre.fournisseur_id}"
+                    prix_offre, deal = negociateur.run(
+                        round, offre.fournisseur_id % NB_FOURNISSEURS, nouveau_prix
                     )
                     offre.update(prix_offre)
+                    if deal:
+                        break
+                    print(
+                        f"N{negociateur.id % NB_NEGOCIATEURS} a proposé {prix_offre} pour F{offre.fournisseur_id%NB_FOURNISSEURS}"
+                    )
             print("\n")
 
-            # if offre.deal:
-            #     continue
-            # prix = offre.prix
-
-        #         if not negociateur.is_satisfied(id_offre, prix):
-        #             negociateur.faire_nouvelle_offre()
-
-        # for fournisseur in env.liste_fournisseurs:
-        #     for id_offre in negociateur.offres:
-        #         offre = env.offres[id_offre]
-        #         if offre.deal:
-        #             continue
-        #         prix = offre.prix
-
-        #         if not fournisseur.is_satisfied(id_offre, prix):
-        #             fournisseur.faire_nouvelle_offre()
-
-        # for offre in env.offres:
-        #     if negociateur.is_satisfied(
-        #         offre.id_offre, offre.prix
-        #     ) and fournisseur.is_satisfied(id_offre, prix):
-        #         offre.deal = True
+        for fournisseur in env.liste_fournisseurs:
+            if not fournisseur.deal:
+                offres_fournisseur = [
+                    offre
+                    for offre in env.liste_offres
+                    if offre.fournisseur_id == fournisseur.id
+                ]
+                for offre in offres_fournisseur:
+                    nouveau_prix = offre.prix
+                    prix_offre, deal = fournisseur.run(
+                        round, offre.negociateur_id % NB_NEGOCIATEURS, nouveau_prix
+                    )
+                    offre.update(prix_offre)
+                    if deal:
+                        break
+                    print(
+                        f"F{fournisseur.id % NB_NEGOCIATEURS} a proposé {prix_offre} pour N{offre.negociateur_id%NB_NEGOCIATEURS}"
+                    )
+            print("\n")
 
 
 if __name__ == "__main__":
-    main()
+    main(NB_FOURNISSEURS, NB_NEGOCIATEURS)

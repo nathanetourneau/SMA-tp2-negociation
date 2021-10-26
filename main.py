@@ -66,47 +66,6 @@ def main(NB_FOURNISSEURS, NB_NEGOCIATEURS):
                     )
                     print("\n")
 
-        # for negociateur in env.liste_negociateurs:
-        #     if not negociateur.deal:
-        #         offres_negociateur = [
-        #             offre
-        #             for offre in env.liste_offres
-        #             if (offre.negociateur_id == negociateur.id) and (not offre.deal)
-        #         ]
-        #         for offre in offres_negociateur:
-        #             nouveau_prix = offre.prix
-        #             prix_offre, deal = negociateur.run(
-        #                 round, offre.fournisseur_id % NB_FOURNISSEURS, nouveau_prix
-        #             )
-        #             offre.update(negociateur.id, prix_offre)
-        #             if deal:
-        #                 offre.deal = True
-        #                 break
-        #             print(
-        #                 f"N{negociateur.id % NB_NEGOCIATEURS} a proposé {prix_offre} pour F{offre.fournisseur_id%NB_FOURNISSEURS}"
-        #             )
-        #     print("\n")
-
-        # for fournisseur in env.liste_fournisseurs:
-        #     if not fournisseur.deal:
-        #         offres_fournisseur = [
-        #             offre
-        #             for offre in env.liste_offres
-        #             if offre.fournisseur_id == fournisseur.id
-        #         ]
-        #         for offre in offres_fournisseur:
-        #             nouveau_prix = offre.prix
-        #             prix_offre, deal = fournisseur.run(
-        #                 round, offre.negociateur_id % NB_NEGOCIATEURS, nouveau_prix
-        #             )
-        #             offre.update(prix_offre)
-        #             if deal:
-        #                 break
-        #             print(
-        #                 f"F{fournisseur.id % NB_NEGOCIATEURS} a proposé {prix_offre} pour N{offre.negociateur_id%NB_NEGOCIATEURS}"
-        #             )
-        #     print("\n")
-
 
 if __name__ == "__main__":
     main(NB_FOURNISSEURS, NB_NEGOCIATEURS)

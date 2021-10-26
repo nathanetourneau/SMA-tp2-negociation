@@ -4,21 +4,22 @@ import logging
 
 from environnement import Environnement
 from offre import Offre
-from agent import Negociateur, Fournisseur, NB_NEGOCIATEURS, NB_FOURNISSEURS
+from agent import Negociateur, Fournisseur
 from strategies import *
 
-random.seed(1)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# random.choice(list(comportements.keys()))
+NB_FOURNISSEURS = 10
+NB_NEGOCIATEURS = 5
 
 
 def main(NB_FOURNISSEURS, NB_NEGOCIATEURS):
 
     env = Environnement()
 
-    NB_ROUNDS = 15
+    NB_ROUNDS = 25
 
     env.liste_fournisseurs = [
         Fournisseur(i, gaussienne, "modere", NB_NEGOCIATEURS, random.randrange(75, 125))

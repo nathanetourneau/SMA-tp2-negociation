@@ -4,8 +4,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-NB_FOURNISSEURS = 2
-NB_NEGOCIATEURS = 2
 
 comportements_dict = {
     "intransigeant": {
@@ -16,7 +14,11 @@ comportements_dict = {
     "laxiste": {"taux_variation_prix_seuil": 0.30, "coefficient_nouvelle_offre": 0.30},
 }
 
-# random.choice(list(comportements.keys()))
+BLUE = "\033[94m"
+WHITE = "\33[37m"
+GREEN = "\33[32m"
+RED = "\33[31m"
+RESET = "\033[0m"
 
 
 class Agent:
@@ -87,7 +89,7 @@ class Fournisseur(Agent):
             self.liste_prix_offre[
                 id_adversaire
             ] = prix_offre - coefficient_nouvelle_offre * (prix_offre - prix_min)
-        logger.debug(f"Prix min F{self.id%NB_FOURNISSEURS} : {prix_min}")
+        logger.debug(f"Prix min F{self.id} : {prix_min}")
         return self.liste_prix_offre[id_adversaire]
 
     def is_satisfied(self, prix, id_adversaire):
@@ -97,9 +99,7 @@ class Fournisseur(Agent):
         if not prix:
             return self.faire_nouvelle_offre(id_adversaire), False
         elif self.is_satisfied(prix, id_adversaire):
-            logger.info(
-                f"Deal entre F{self.id % NB_FOURNISSEURS} et N{id_adversaire % NB_NEGOCIATEURS}!"
-            )
+            print(f"{RED} Deal entre F{self.id} et N{id_adversaire}!{RESET}")
             self.deal = True
             return prix, self.deal
         else:
@@ -126,19 +126,13 @@ class Negociateur(Agent):
             threshold_comportement = delta_prix / prix_max
             if 0 < threshold_comportement <= 0.1:
                 self.liste_comportements[id_adversaire] = "laxiste"
-                logger.debug(
-                    f"N{self.id % NB_NEGOCIATEURS} passe de {comportement} à laxiste"
-                )
+                logger.debug(f"N{self.id} passe de {comportement} à laxiste")
             elif 0.1 < threshold_comportement <= 0.2:
                 self.liste_comportements[id_adversaire] = "modere"
-                logger.debug(
-                    f"N{self.id % NB_NEGOCIATEURS} passe de {comportement} à modere"
-                )
+                logger.debug(f"N{self.id} passe de {comportement} à modere")
             elif 0.2 < threshold_comportement:
                 self.liste_comportements[id_adversaire] = "intransigeant"
-                logger.debug(
-                    f"N{self.id % NB_NEGOCIATEURS} passe de {comportement} à intransigeant"
-                )
+                logger.debug(f"N{self.id} passe de {comportement} à intransigeant")
 
     def update_prix_max(self, current_round, id_adversaire):
         """L'agent sera plus enclin à faire des efforts si l'adversaire propose un prix peu éloigné de son priux seuil"""
@@ -167,7 +161,7 @@ class Negociateur(Agent):
             self.liste_prix_offre[
                 id_adversaire
             ] = prix_offre + coefficient_nouvelle_offre * (prix_max - prix_offre)
-        logger.debug(f"Prix max N{self.id%NB_NEGOCIATEURS} : {prix_max}")
+        logger.debug(f"Prix max N{self.id} : {prix_max}")
         return self.liste_prix_offre[id_adversaire]
 
     def is_satisfied(self, prix, id_adversaire):
@@ -177,9 +171,7 @@ class Negociateur(Agent):
         if not prix:
             return self.faire_nouvelle_offre(id_adversaire), False
         elif self.is_satisfied(prix, id_adversaire):
-            logger.info(
-                f"Deal entre N{self.id % NB_NEGOCIATEURS} et F{id_adversaire % NB_FOURNISSEURS}!!"
-            )
+            print(f"{RED}Deal entre N{self.id} et F{id_adversaire}!{RESET}")
             self.deal = True
             return prix, self.deal
         else:

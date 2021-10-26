@@ -14,7 +14,3 @@ class Offre:
         self.liste_ancien_prix[negociateur_id] = self.liste_prix[negociateur_id]
         self.liste_prix[negociateur_id] = nouveau_prix
         self.deal = deal
-
-
-# Il faut que les fournisseurs proposent les offres et que chaque offre ait un attribut liste_negociateurs.
-# ça permet de fermer un offre lorsqu'il y a deal

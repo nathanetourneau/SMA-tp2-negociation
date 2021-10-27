@@ -99,7 +99,7 @@ class Fournisseur(Agent):
         if not prix:
             return self.faire_nouvelle_offre(id_adversaire), False
         elif self.is_satisfied(prix, id_adversaire):
-            print(f"{RED} Deal entre F{self.id} et N{id_adversaire}!{RESET}")
+            print(f"{BLUE}Deal entre F{self.id} et N{id_adversaire}!{RESET}")
             self.deal = True
             return prix, self.deal
         else:
@@ -171,7 +171,7 @@ class Negociateur(Agent):
         if not prix:
             return self.faire_nouvelle_offre(id_adversaire), False
         elif self.is_satisfied(prix, id_adversaire):
-            print(f"{RED}Deal entre N{self.id} et F{id_adversaire}!{RESET}")
+            print(f"{GREEN}Deal entre N{self.id} et F{id_adversaire}!{RESET}")
             self.deal = True
             return prix, self.deal
         else:

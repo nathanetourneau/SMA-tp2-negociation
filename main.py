@@ -4,7 +4,7 @@ import logging
 
 from environnement import Environnement
 from offre import Offre
-from agent import Negociateur, Fournisseur
+from agent import Negociateur, Fournisseur, RED, GREEN, RESET
 from strategies import *
 
 
@@ -37,7 +37,7 @@ def main(NB_FOURNISSEURS, NB_NEGOCIATEURS):
 
     ########
     for round in range(NB_ROUNDS):
-        print(f"----------------------- ROUND {round} -----------------------")
+        print(f"---------- ROUND {round} ----------")
         for offre in env.liste_offres:
             if not offre.deal:
                 for negociateur_id in offre.liste_negociateur_id:
@@ -48,9 +48,10 @@ def main(NB_FOURNISSEURS, NB_NEGOCIATEURS):
                     )
                     offre.update(negociateur_id, prix_offre, deal)
                     if deal:
+                        env.liste_fournisseurs[offre.fournisseur_id].deal = True
                         env.remove_negociateur(negociateur_id)
                         break
-                    print(
+                    logger.debug(
                         f"N{negociateur.id} a proposé {prix_offre} pour F{offre.fournisseur_id}"
                     )
                     fournisseur = env.liste_fournisseurs[offre.fournisseur_id]
@@ -60,12 +61,19 @@ def main(NB_FOURNISSEURS, NB_NEGOCIATEURS):
                     )
                     offre.update(negociateur_id, prix_offre, deal)
                     if deal:
+                        env.liste_negociateurs[negociateur_id].deal = True
                         env.remove_negociateur(negociateur_id)
                         break
-                    print(
+                    logger.debug(
                         f"F{fournisseur.id} a proposé {prix_offre} pour N{negociateur_id}"
                     )
-                    print("\n")
+                    logger.debug("\n")
+    for negociateur in env.liste_negociateurs:
+        if not negociateur.deal:
+            print(f"{RED}No deal for N{negociateur.id}{RESET}")
+    for fournisseur in env.liste_fournisseurs:
+        if not fournisseur.deal:
+            print(f"{RED}No deal for F{fournisseur.id}{RESET}")
 
 
 if __name__ == "__main__":

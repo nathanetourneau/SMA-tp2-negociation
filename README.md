@@ -5,7 +5,8 @@ Les agents tentent différentes stratégies pour parvenir à leurs fins.
 
 ## Usage
 
-Chnage the parameters of the negociation in the main file and the strategies you want the agents to adopt. Then run the program with :
+Changer les paramètres de la négociation et les stratégies des agents dans `main.py`.
+Exécuter le programme avec : 
 
 ```python main.py```
 

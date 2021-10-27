@@ -46,6 +46,14 @@ class Fournisseur(Agent):
         super().__init__(id, strategie, comportement, nb_adversaires, nb_offres_max)
         self.liste_prix_min = [prix_min for i in range(nb_adversaires)]
 
+    def __str__(self):
+        return f"""
+        Fournisseur: {self.id}
+        Strategie: {self.strategie.__name__}
+        Comportements: {self.liste_comportements}
+        Prix max: {self.liste_prix_min}
+        Nb offres max: {self.nb_offres_max}"""
+
     def update_comportement(self, nouveau_prix, id_adversaire):
         """L'agent sera plus enclin à faire des efforts si l'adversaire propose un prix peu éloigné de son priux seuil"""
         prix_min = self.liste_prix_min[id_adversaire]
@@ -116,6 +124,14 @@ class Negociateur(Agent):
     ):
         super().__init__(id, strategie, comportement, nb_adversaires, nb_offres_max)
         self.liste_prix_max = [prix_max for i in range(nb_adversaires)]
+
+    def __str__(self):
+        return f"""
+        Negociateur: {self.id}
+        Strategie: {self.strategie.__name__}
+        Comportements: {self.liste_comportements}
+        Prix max: {self.liste_prix_max}
+        Nb offres max: {self.nb_offres_max}"""
 
     def update_comportement(self, nouveau_prix, id_adversaire):
         """L'agent sera plus enclin à faire des efforts si l'adversaire propose un prix peu éloigné de son priux seuil"""

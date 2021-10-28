@@ -10,5 +10,6 @@ Exécuter le programme avec :
 
 ```python main.py```
 
-**Authors** : [@paulflagel](https://github.com/paulflagel/), [@nathanetourneau](https://github.com/nathanetourneau).
+**Authors** : [@paulflagel](https://github.com/paulflagel/), [@nathanetourneau](https://github.com/nathanetourneau)
+
 Master 2 IA - Université Lyon 1 - 2021-2022

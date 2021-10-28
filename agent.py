@@ -40,6 +40,7 @@ class Agent:
         self.limit_price_list = [limit_price for i in range(nb_opponents)]
 
     def _update_behavior(self, new_price, opponent_id, type):
+        """The agent will be more inclined to make efforts if the opponent offers a price close to his limit price"""
         if type == "S":
             limit_price = self.limit_price_list[
                 opponent_id
@@ -82,12 +83,6 @@ class Seller(Agent):
         Comportements: {self.behavior_list}
         Prix max: {self.limit_price_list}
         Nb offres max: {self.nb_max_offers}"""
-
-    def update_behavior(self, new_price, opponent_id):
-        """L'agent sera plus enclin à faire des efforts si l'adversaire propose un price peu éloigné de son priux seuil"""
-        min_price = self.limit_price_list[opponent_id]
-        delta_price = min_price - new_price
-        Agent._update_behavior(self, min_price, delta_price, opponent_id, self.type)
 
     def update_prix_min(self, current_round, opponent_id):
         behavior = self.behavior_list[opponent_id]
@@ -156,12 +151,6 @@ class Buyer(Agent):
         Comportements: {self.behavior_list}
         Prix max: {self.limit_price_list}
         Nb offres max: {self.nb_max_offers}"""
-
-    def update_behavior(self, new_price, opponent_id):
-        """L'agent sera plus enclin à faire des efforts si l'adversaire propose un price peu éloigné de son priux seuil"""
-        max_price = self.limit_price_list[opponent_id]
-        delta_price = new_price - max_price
-        Agent._update_behavior(self, max_price, delta_price, opponent_id, self.type)
 
     def update_prix_max(self, current_round, opponent_id):
         """L'agent sera plus enclin à faire des efforts si l'adversaire propose un price peu éloigné de son priux seuil"""

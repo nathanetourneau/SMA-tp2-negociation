@@ -5,13 +5,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-comportements_dict = {
+behaviors_dict = {
     "intransigeant": {
-        "taux_variation_prix_seuil": 0.05,
-        "coefficient_nouvelle_offre": 0.05,
+        "variation_rate_limit_price": 0.05,
+        "new_offer_coefficient": 0.05,
     },
-    "modere": {"taux_variation_prix_seuil": 0.15, "coefficient_nouvelle_offre": 0.15},
-    "laxiste": {"taux_variation_prix_seuil": 0.30, "coefficient_nouvelle_offre": 0.30},
+    "modere": {"variation_rate_limit_price": 0.15, "new_offer_coefficient": 0.15},
+    "laxiste": {"variation_rate_limit_price": 0.30, "new_offer_coefficient": 0.30},
 }
 
 BLUE = "\033[94m"
@@ -22,175 +22,186 @@ RESET = "\033[0m"
 
 
 class Agent:
-    def __init__(self, id, strategie, comportement, nb_adversaires, nb_offres_max=None):
+    def __init__(
+        self, id, strategy, behavior, nb_opponents, limit_price, nb_max_offers=None
+    ):
         self.id = id
-        self.strategie = strategie  # function
-        self.liste_comportements = [
-            comportement for i in range(nb_adversaires)
+        self.strategy = strategy  # function
+        self.behavior_list = [
+            behavior for i in range(nb_opponents)
         ]  # strings - key of the dictionnary
         # self.liste_offres = None  # list of offres objects
-        self.liste_prix_offre = [None for i in range(nb_adversaires)]
-        if not nb_offres_max:
-            self.nb_offres_max = random.randrange(10, 25)
+        self.offers_price_list = [None for i in range(nb_opponents)]
+        if not nb_max_offers:
+            self.nb_max_offers = random.randrange(10, 25)
         else:
-            self.nb_offres_max = nb_offres_max
+            self.nb_max_offers = nb_max_offers
         self.deal = False
+        self.limit_price_list = [limit_price for i in range(nb_opponents)]
+
+    def _update_behavior(self, new_price, opponent_id, type):
+        if type == "S":
+            limit_price = self.limit_price_list[
+                opponent_id
+            ]  # limit price = minimum price
+            delta_price = limit_price - new_price
+        elif type == "B":
+            limit_price = self.limit_price_list[
+                opponent_id
+            ]  # limit price = maximum price
+            delta_price = new_price - limit_price
+        behavior = self.behavior_list[opponent_id]
+        if delta_price > 0:
+            threshold_behavior = delta_price / limit_price
+            if 0 < threshold_behavior <= 0.1:
+                self.behavior_list[opponent_id] = "laxiste"
+                logger.debug(f"{type}{self.id} passe de {behavior} à laxiste")
+            elif 0.1 < threshold_behavior <= 0.2:
+                self.behavior_list[opponent_id] = "modere"
+                logger.debug(f"{type}{self.id} passe de {behavior} à modere")
+            elif 0.2 < threshold_behavior:
+                self.behavior_list[opponent_id] = "intransigeant"
+                logger.debug(f"{type}{self.id} passe de {behavior} à intransigeant")
 
 
-class Fournisseur(Agent):
-    """Le fournisseur souhaite vendre son service le plus cher possible et ne descendra pas sous un prix minimal."""
+class Seller(Agent):
+    """Le fournisseur souhaite vendre son service le plus cher possible et ne descendra pas sous un price minimal."""
 
     def __init__(
-        self, id, strategie, comportement, nb_adversaires, prix_min, nb_offres_max=None
+        self, id, strategy, behavior, nb_opponents, limit_price, nb_max_offers=None
     ):
-        super().__init__(id, strategie, comportement, nb_adversaires, nb_offres_max)
-        self.liste_prix_min = [prix_min for i in range(nb_adversaires)]
+        Agent.__init__(
+            self, id, strategy, behavior, nb_opponents, limit_price, nb_max_offers
+        )
+        self.type = "S"
 
     def __str__(self):
         return f"""
         Fournisseur: {self.id}
-        Strategie: {self.strategie.__name__}
-        Comportements: {self.liste_comportements}
-        Prix max: {self.liste_prix_min}
-        Nb offres max: {self.nb_offres_max}"""
+        Strategie: {self.strategy.__name__}
+        Comportements: {self.behavior_list}
+        Prix max: {self.limit_price_list}
+        Nb offres max: {self.nb_max_offers}"""
 
-    def update_comportement(self, nouveau_prix, id_adversaire):
-        """L'agent sera plus enclin à faire des efforts si l'adversaire propose un prix peu éloigné de son priux seuil"""
-        prix_min = self.liste_prix_min[id_adversaire]
-        delta_prix = prix_min - nouveau_prix
-        comportement = self.liste_comportements[id_adversaire]
-        if delta_prix > 0:
-            threshold_comportement = delta_prix / prix_min
-            if 0 < threshold_comportement <= 0.1:
-                self.liste_comportements[id_adversaire] = "laxiste"
-                logger.debug(f"F{self.id} passe de {comportement} à laxiste")
-            elif 0.1 < threshold_comportement <= 0.2:
-                self.liste_comportements[id_adversaire] = "modere"
-                logger.debug(f"F{self.id} passe de {comportement} à modere")
-            elif 0.2 < threshold_comportement:
-                self.liste_comportements[id_adversaire] = "intransigeant"
-                logger.debug(f"F{self.id} passe de {comportement} à intransigeant")
+    def update_behavior(self, new_price, opponent_id):
+        """L'agent sera plus enclin à faire des efforts si l'adversaire propose un price peu éloigné de son priux seuil"""
+        min_price = self.limit_price_list[opponent_id]
+        delta_price = min_price - new_price
+        Agent._update_behavior(self, min_price, delta_price, opponent_id, self.type)
 
-    def update_prix_min(self, current_round, id_adversaire):
-        comportement = self.liste_comportements[id_adversaire]
-        taux_variation_prix_seuil = comportements_dict[comportement][
-            "taux_variation_prix_seuil"
+    def update_prix_min(self, current_round, opponent_id):
+        behavior = self.behavior_list[opponent_id]
+        variation_rate_limit_price = behaviors_dict[behavior][
+            "variation_rate_limit_price"
         ]
-        self.liste_prix_min[id_adversaire] *= (
+        self.limit_price_list[opponent_id] *= (
             1
-            - self.strategie(current_round / self.nb_offres_max)
-            * taux_variation_prix_seuil
+            - self.strategy(current_round / self.nb_max_offers)
+            * variation_rate_limit_price
         )
 
-    def faire_nouvelle_offre(self, id_adversaire):
-        prix_offre = self.liste_prix_offre[id_adversaire]
-        prix_min = self.liste_prix_min[id_adversaire]
-        if not prix_offre:
-            self.liste_prix_offre[id_adversaire] = random.uniform(
-                1.2 * prix_min, 1.4 * prix_min
+    def make_new_offer(self, opponent_id):
+        offer_price = self.offers_price_list[opponent_id]
+        min_price = self.limit_price_list[opponent_id]
+        if not offer_price:
+            self.offers_price_list[opponent_id] = random.uniform(
+                1.2 * min_price, 1.4 * min_price
             )
         else:
-            comportement = self.liste_comportements[id_adversaire]
-            coefficient_nouvelle_offre = comportements_dict[comportement][
-                "coefficient_nouvelle_offre"
-            ]
-            self.liste_prix_offre[
-                id_adversaire
-            ] = prix_offre - coefficient_nouvelle_offre * (prix_offre - prix_min)
-        logger.debug(f"Prix min F{self.id} : {prix_min}")
-        return self.liste_prix_offre[id_adversaire]
+            behavior = self.behavior_list[opponent_id]
+            new_offer_coefficient = behaviors_dict[behavior]["new_offer_coefficient"]
+            self.offers_price_list[
+                opponent_id
+            ] = offer_price - new_offer_coefficient * (offer_price - min_price)
+        logger.debug(f"Prix min F{self.id} : {min_price}")
+        return self.offers_price_list[opponent_id]
 
-    def is_satisfied(self, prix, id_adversaire):
-        return self.liste_prix_min[id_adversaire] <= prix
+    def is_satisfied(self, price, opponent_id):
+        return self.limit_price_list[opponent_id] <= price
 
-    def run(self, current_round, id_adversaire, prix):
-        if not prix:
-            return self.faire_nouvelle_offre(id_adversaire), False
-        elif self.is_satisfied(prix, id_adversaire):
-            print(f"{BLUE}Deal entre F{self.id} et N{id_adversaire}!{RESET}")
+    def run(self, current_round, opponent_id, price):
+        if not price:
+            return self.make_new_offer(opponent_id), False
+        elif self.is_satisfied(price, opponent_id):
+            print(f"{BLUE}Deal entre F{self.id} et N{opponent_id}!{RESET}")
             self.deal = True
-            return prix, self.deal
+            return price, self.deal
         else:
-            self.update_comportement(prix, id_adversaire)
-            self.update_prix_min(current_round, id_adversaire)
-            return self.faire_nouvelle_offre(id_adversaire), False
+            Agent._update_behavior(self, price, opponent_id, self.type)
+            self.update_prix_min(current_round, opponent_id)
+            return self.make_new_offer(opponent_id), False
 
 
-class Negociateur(Agent):
-    """Le négociateur souhaite acheter le service le moins cher possible au fournisseur et s'est fixé un prix maximal."""
+class Buyer(Agent):
+    """Le négociateur souhaite acheter le service le moins cher possible au fournisseur et s'est fixé un price maximal."""
 
     def __init__(
-        self, id, strategie, comportement, nb_adversaires, prix_max, nb_offres_max=None
+        self,
+        id,
+        strategy,
+        behavior,
+        nb_opponents,
+        limit_price,
+        nb_max_offers=None,
     ):
-        super().__init__(id, strategie, comportement, nb_adversaires, nb_offres_max)
-        self.liste_prix_max = [prix_max for i in range(nb_adversaires)]
+        Agent.__init__(
+            self, id, strategy, behavior, nb_opponents, limit_price, nb_max_offers
+        )
+        self.type = "B"
 
     def __str__(self):
         return f"""
         Negociateur: {self.id}
-        Strategie: {self.strategie.__name__}
-        Comportements: {self.liste_comportements}
-        Prix max: {self.liste_prix_max}
-        Nb offres max: {self.nb_offres_max}"""
+        Strategie: {self.strategy.__name__}
+        Comportements: {self.behavior_list}
+        Prix max: {self.limit_price_list}
+        Nb offres max: {self.nb_max_offers}"""
 
-    def update_comportement(self, nouveau_prix, id_adversaire):
-        """L'agent sera plus enclin à faire des efforts si l'adversaire propose un prix peu éloigné de son priux seuil"""
-        prix_max = self.liste_prix_max[id_adversaire]
-        delta_prix = nouveau_prix - prix_max
-        comportement = self.liste_comportements[id_adversaire]
-        if delta_prix > 0:
-            threshold_comportement = delta_prix / prix_max
-            if 0 < threshold_comportement <= 0.1:
-                self.liste_comportements[id_adversaire] = "laxiste"
-                logger.debug(f"N{self.id} passe de {comportement} à laxiste")
-            elif 0.1 < threshold_comportement <= 0.2:
-                self.liste_comportements[id_adversaire] = "modere"
-                logger.debug(f"N{self.id} passe de {comportement} à modere")
-            elif 0.2 < threshold_comportement:
-                self.liste_comportements[id_adversaire] = "intransigeant"
-                logger.debug(f"N{self.id} passe de {comportement} à intransigeant")
+    def update_behavior(self, new_price, opponent_id):
+        """L'agent sera plus enclin à faire des efforts si l'adversaire propose un price peu éloigné de son priux seuil"""
+        max_price = self.limit_price_list[opponent_id]
+        delta_price = new_price - max_price
+        Agent._update_behavior(self, max_price, delta_price, opponent_id, self.type)
 
-    def update_prix_max(self, current_round, id_adversaire):
-        """L'agent sera plus enclin à faire des efforts si l'adversaire propose un prix peu éloigné de son priux seuil"""
-        comportement = self.liste_comportements[id_adversaire]
-        taux_variation_prix_seuil = comportements_dict[comportement][
-            "taux_variation_prix_seuil"
+    def update_prix_max(self, current_round, opponent_id):
+        """L'agent sera plus enclin à faire des efforts si l'adversaire propose un price peu éloigné de son priux seuil"""
+        behavior = self.behavior_list[opponent_id]
+        variation_rate_limit_price = behaviors_dict[behavior][
+            "variation_rate_limit_price"
         ]
-        self.liste_prix_max[id_adversaire] *= (
+        self.limit_price_list[opponent_id] *= (
             1
-            + self.strategie(current_round / self.nb_offres_max)
-            * taux_variation_prix_seuil
+            + self.strategy(current_round / self.nb_max_offers)
+            * variation_rate_limit_price
         )
 
-    def faire_nouvelle_offre(self, id_adversaire):
-        prix_offre = self.liste_prix_offre[id_adversaire]
-        prix_max = self.liste_prix_max[id_adversaire]
-        if not prix_offre:
-            self.liste_prix_offre[id_adversaire] = random.uniform(
-                0.6 * prix_max, 0.8 * prix_max
+    def make_new_offer(self, opponent_id):
+        offer_price = self.offers_price_list[opponent_id]
+        max_price = self.limit_price_list[opponent_id]
+        if not offer_price:
+            self.offers_price_list[opponent_id] = random.uniform(
+                0.6 * max_price, 0.8 * max_price
             )
         else:
-            comportement = self.liste_comportements[id_adversaire]
-            coefficient_nouvelle_offre = comportements_dict[comportement][
-                "coefficient_nouvelle_offre"
-            ]
-            self.liste_prix_offre[
-                id_adversaire
-            ] = prix_offre + coefficient_nouvelle_offre * (prix_max - prix_offre)
-        logger.debug(f"Prix max N{self.id} : {prix_max}")
-        return self.liste_prix_offre[id_adversaire]
+            behavior = self.behavior_list[opponent_id]
+            new_offer_coefficient = behaviors_dict[behavior]["new_offer_coefficient"]
+            self.offers_price_list[
+                opponent_id
+            ] = offer_price + new_offer_coefficient * (max_price - offer_price)
+        logger.debug(f"Prix max N{self.id} : {max_price}")
+        return self.offers_price_list[opponent_id]
 
-    def is_satisfied(self, prix, id_adversaire):
-        return prix <= self.liste_prix_max[id_adversaire]
+    def is_satisfied(self, price, opponent_id):
+        return price <= self.limit_price_list[opponent_id]
 
-    def run(self, current_round, id_adversaire, prix=None):
-        if not prix:
-            return self.faire_nouvelle_offre(id_adversaire), False
-        elif self.is_satisfied(prix, id_adversaire):
-            print(f"{GREEN}Deal entre N{self.id} et F{id_adversaire}!{RESET}")
+    def run(self, current_round, opponent_id, price=None):
+        if not price:
+            return self.make_new_offer(opponent_id), False
+        elif self.is_satisfied(price, opponent_id):
+            print(f"{GREEN}Deal entre N{self.id} et F{opponent_id}!{RESET}")
             self.deal = True
-            return prix, self.deal
+            return price, self.deal
         else:
-            self.update_comportement(prix, id_adversaire)
-            self.update_prix_max(current_round, id_adversaire)
-            return self.faire_nouvelle_offre(id_adversaire), False
+            Agent._update_behavior(self, price, opponent_id, self.type)
+            self.update_prix_max(current_round, opponent_id)
+            return self.make_new_offer(opponent_id), False

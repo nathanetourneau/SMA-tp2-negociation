@@ -1,12 +1,11 @@
 # SMA-TP2-negociation
 
-Modélisation d'un système de négociation automatique multi-agent. Des agents fournisseurs proposent des offres, et des agents négociateurs tentent de les obtenir au meilleur prix.
-Les agents tentent différentes stratégies pour parvenir à leurs fins.
+Modeling of an automatic multi-agent negotiation system. Supplying agents propose offers, and negotiating agents try to obtain them at the best price. The agents try different strategies to achieve their goals.
 
-## Usage
+## Run
 
-Changer les paramètres de la négociation et les stratégies des agents dans `main.py`.
-Exécuter le programme avec : 
+Change the negotiation parameters and the agent strategies in `main.py`.
+Run the program with :
 
 ```python main.py```
 

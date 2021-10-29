@@ -22,38 +22,86 @@ RESET = "\033[0m"
 
 
 class AgentRandom:
-    def __init__(self, id, nb_opponents, limit_price, nb_max_offers=None):
+    def __init__(self, id, nb_opponents, limit_price, nb_max_offers):
         self.id = id
         self.nb_opponents = nb_opponents
         self.limit_price_list = [limit_price for i in range(nb_opponents)]
-        if not nb_max_offers:
-            self.nb_max_offers = random.randrange(10, 25)
-        else:
-            self.nb_max_offers = nb_max_offers
+        self.nb_max_offers = nb_max_offers
         self.deal = False
         self.offers_price_list = [None for i in range(nb_opponents)]
 
-    def make_new_offer(self, opponent_id):
-        if not self.offers_price_list[opponent_id]:
-            self.offers_price_list[opponent_id] = random.randint(
-                0.8 * self.limit_price_list[opponent_id], self.limit_price_list
-            )
+    def _make_new_offer(self, opponent_id, agent_type):
+        if self.offers_price_list[opponent_id]:
+            if agent_type == "B":
+                self.offers_price_list[opponent_id] = random.uniform(
+                    self.offers_price_list[opponent_id],
+                    self.limit_price_list[opponent_id],
+                )
+            elif agent_type == "S":
+                self.offers_price_list[opponent_id] = random.uniform(
+                    self.limit_price_list[opponent_id],
+                    self.offers_price_list[opponent_id],
+                )
         else:
-            self.offers_price_list[opponent_id] = random.randint(
-                self.offers_price_list[opponent_id], self.limit_price_list
-            )
+            if agent_type == "B":
+                self.offers_price_list[opponent_id] = random.uniform(
+                    0.8 * self.limit_price_list[opponent_id],
+                    self.limit_price_list[opponent_id],
+                )
+            elif agent_type == "S":
+                self.offers_price_list[opponent_id] = random.uniform(
+                    self.limit_price_list[opponent_id],
+                    1.2 * self.limit_price_list[opponent_id],
+                )
         return self.offers_price_list[opponent_id]
 
-    def is_satisfied(self, price, opponent_id, agent_type):
+    def _is_satisfied(self, price, opponent_id, agent_type):
         if agent_type == "S":
             return self.limit_price_list[opponent_id] <= price
         elif agent_type == "B":
             return price <= self.limit_price_list[opponent_id]
 
+    def _run(self, current_round, opponent_id, price, agent_type):
+        if not price:
+            a = self._make_new_offer(opponent_id, agent_type)
+            logger.info(a)
+            return (a, False)
+        elif self._is_satisfied(price, opponent_id, agent_type):
+            if agent_type == "S":
+                print(f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}")
+            elif agent_type == "B":
+                print(f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}")
+            self.deal = True
+            return price, self.deal
+        else:
+            return self._make_new_offer(opponent_id, agent_type), False
+
+
+class SellerRandom(AgentRandom):
+    def __init__(self, id, nb_opponents, limit_price, nb_max_offers=None):
+        AgentRandom.__init__(self, id, nb_opponents, limit_price, nb_max_offers)
+        self.agent_type = "S"
+
+    def run(self, current_round, opponent_id, price=None):
+        return AgentRandom._run(
+            self, current_round, opponent_id, price, self.agent_type
+        )
+
+
+class BuyerRandom(AgentRandom):
+    def __init__(self, id, nb_opponents, limit_price, nb_max_offers=None):
+        AgentRandom.__init__(self, id, nb_opponents, limit_price, nb_max_offers)
+        self.agent_type = "B"
+
+    def run(self, current_round, opponent_id, price=None):
+        return AgentRandom._run(
+            self, current_round, opponent_id, price, self.agent_type
+        )
+
 
 class Agent:
     def __init__(
-        self, id, strategy, behavior, nb_opponents, limit_price, nb_max_offers=None
+        self, id, strategy, behavior, nb_opponents, limit_price, nb_max_offers
     ):
         self.id = id
         self.strategy = strategy  # function
@@ -62,10 +110,7 @@ class Agent:
         ]  # strings - key of the dictionnary
         # self.liste_offres = None  # list of offres objects
         self.offers_price_list = [None for i in range(nb_opponents)]
-        if not nb_max_offers:
-            self.nb_max_offers = random.randrange(10, 25)
-        else:
-            self.nb_max_offers = nb_max_offers
+        self.nb_max_offers = nb_max_offers
         self.deal = False
         self.limit_price_list = [limit_price for i in range(nb_opponents)]
 
@@ -159,24 +204,15 @@ class Agent:
             return self._make_new_offer(opponent_id, agent_type), False
         elif self._is_satisfied(price, opponent_id, agent_type):
             if agent_type == "S":
-                print(f"{BLUE}Deal entre F{self.id} et N{opponent_id}!{RESET}")
+                print(f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}")
             elif agent_type == "B":
-                print(f"{GREEN}Deal entre N{self.id} et F{opponent_id}!{RESET}")
+                print(f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}")
             self.deal = True
             return price, self.deal
         else:
             self._update_behavior(price, opponent_id, agent_type)
             self._update_limit_price(opponent_id, current_round, agent_type)
             return self._make_new_offer(opponent_id, agent_type), False
-
-
-class SellerRandom(AgentRandom):
-    def __init__(self, id, nb_opponents, limit_price, nb_max_offers=None):
-        AgentRandom.__init__(self, id, nb_opponents, limit_price, nb_max_offers=None)
-        self.agent_type = "S"
-
-    # def run(self, current_round, opponent_id, price):
-    #     super._run(self,current_round, opponent_id,price,self.age)
 
 
 class Seller(Agent):

@@ -1,5 +1,5 @@
 import random
-from agent import Seller, Buyer
+from agent import Seller, Buyer, SellerRandom, BuyerRandom
 from offre import Offre
 from strategies import *
 import logging
@@ -14,36 +14,68 @@ class Environment:
         nb_sellers,
         nb_buyers,
         nb_rounds,
+        strategy,
         sellers_dict_list=None,  # List of dicts
         buyers_dict_list=None,  # List of dicts
     ):
         self.nb_rounds = nb_rounds
-        if sellers_dict_list and buyers_dict_list:
-            self.sellers_list = []
-            self.buyers_list = []
-            for id, seller_dict in enumerate(sellers_dict_list):
-                strategie = seller_dict["strategy"]
-                comportement = seller_dict["behavior"]
-                prix_max = seller_dict["limit_price"]
-                self.sellers_list.append(
-                    Seller(id, strategie, comportement, nb_buyers, prix_max)
-                )
-            for id, buyer_dict in enumerate(buyers_dict_list):
-                strategie = buyer_dict["strategy"]
-                comportement = buyer_dict["behavior"]
-                prix_min = buyer_dict["limit_price"]
-                self.buyers_list.append(
-                    Buyer(id, strategie, comportement, nb_sellers, prix_min)
-                )
-        else:
+        if strategy == "complex":
+            if sellers_dict_list and buyers_dict_list:
+                self.sellers_list = []
+                self.buyers_list = []
+                for id, seller_dict in enumerate(sellers_dict_list):
+                    self.sellers_list.append(
+                        Seller(
+                            id,
+                            seller_dict["strategy"],
+                            seller_dict["behavior"],
+                            nb_buyers,
+                            seller_dict["limit_price"],
+                            seller_dict["nb_max_offers"],
+                        )
+                    )
+                for id, buyer_dict in enumerate(buyers_dict_list):
+                    self.buyers_list.append(
+                        Buyer(
+                            id,
+                            buyer_dict["strategy"],
+                            buyer_dict["behavior"],
+                            nb_sellers,
+                            buyer_dict["limit_price"],
+                            buyer_dict["nb_max_offers"],
+                        )
+                    )
+            else:
+                behavior = "modere"
+                min_price = random.randrange(100, 150)
+                max_price = random.randrange(50, 100)
+                nb_max_offers = random.randint(nb_rounds // 2, nb_rounds)
+                self.sellers_list = [
+                    Seller(
+                        i,
+                        gaussian,
+                        behavior,
+                        nb_buyers,
+                        min_price,
+                        nb_max_offers,
+                    )
+                    for i in range(nb_sellers)
+                ]
+                self.buyers_list = [
+                    Buyer(i, gaussian, behavior, nb_sellers, max_price, nb_max_offers)
+                    for i in range(nb_buyers)
+                ]
+
+        elif strategy == "random":
             self.sellers_list = [
-                Seller(i, gaussian, "modere", nb_buyers, random.randrange(100, 150))
+                SellerRandom(i, nb_buyers, random.randint(90, 100))
                 for i in range(nb_sellers)
             ]
             self.buyers_list = [
-                Buyer(i, gaussian, "modere", nb_sellers, random.randrange(50, 100))
+                BuyerRandom(i, nb_sellers, random.randint(90, 100))
                 for i in range(nb_buyers)
             ]
+
         self.liste_offres = []
         c = 0
         for i in range(nb_sellers):

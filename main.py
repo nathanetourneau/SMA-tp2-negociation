@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     # sellers_dict_list = [{"strategy": gaussian, "behavior": "modere", "limit_price": 100}]
 
-    env = Environment(NB_SELLERS, NB_BUYERS, NB_ROUNDS)
+    env = Environment(NB_SELLERS, NB_BUYERS, NB_ROUNDS, "complex")
     env.run()
     for buyer in env.buyers_list:
         if not buyer.deal:

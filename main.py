@@ -5,7 +5,6 @@ import logging
 from environnement import Environment
 from offre import Offre
 from agent import Buyer, Seller, RED, RESET
-from strategies import *
 
 
 logging.basicConfig(level=logging.INFO)

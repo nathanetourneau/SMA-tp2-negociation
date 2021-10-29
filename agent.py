@@ -1,5 +1,6 @@
 import random
 import logging
+import scipy.stats as stats
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,6 +20,10 @@ WHITE = "\33[37m"
 GREEN = "\33[32m"
 RED = "\33[31m"
 RESET = "\033[0m"
+
+
+def gaussian(x: float):
+    return stats.norm.pdf(x, 0.5, 0.4)
 
 
 class AgentRandom:
@@ -78,7 +83,7 @@ class AgentRandom:
 
 
 class SellerRandom(AgentRandom):
-    def __init__(self, id, nb_opponents, limit_price, nb_max_offers=None):
+    def __init__(self, id, nb_opponents, limit_price, nb_max_offers):
         AgentRandom.__init__(self, id, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "S"
 
@@ -89,7 +94,7 @@ class SellerRandom(AgentRandom):
 
 
 class BuyerRandom(AgentRandom):
-    def __init__(self, id, nb_opponents, limit_price, nb_max_offers=None):
+    def __init__(self, id, nb_opponents, limit_price, nb_max_offers):
         AgentRandom.__init__(self, id, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "B"
 
@@ -100,11 +105,8 @@ class BuyerRandom(AgentRandom):
 
 
 class Agent:
-    def __init__(
-        self, id, strategy, behavior, nb_opponents, limit_price, nb_max_offers
-    ):
+    def __init__(self, id, behavior, nb_opponents, limit_price, nb_max_offers):
         self.id = id
-        self.strategy = strategy  # function
         self.behavior_list = [
             behavior for i in range(nb_opponents)
         ]  # strings - key of the dictionnary
@@ -149,13 +151,13 @@ class Agent:
         if agent_type == "S":
             self.limit_price_list[opponent_id] *= (
                 1
-                - self.strategy(current_round / self.nb_max_offers)
+                - gaussian(current_round / self.nb_max_offers)
                 * variation_rate_limit_price
             )
         elif agent_type == "B":
             self.limit_price_list[opponent_id] *= (
                 1
-                + self.strategy(current_round / self.nb_max_offers)
+                + gaussian(current_round / self.nb_max_offers)
                 * variation_rate_limit_price
             )
 
@@ -218,18 +220,13 @@ class Agent:
 class Seller(Agent):
     """Le fournisseur souhaite vendre son service le plus cher possible et ne descendra pas sous un prix minimal."""
 
-    def __init__(
-        self, id, strategy, behavior, nb_opponents, limit_price, nb_max_offers=None
-    ):
-        Agent.__init__(
-            self, id, strategy, behavior, nb_opponents, limit_price, nb_max_offers
-        )
+    def __init__(self, id, behavior, nb_opponents, limit_price, nb_max_offers):
+        Agent.__init__(self, id, behavior, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "S"
 
     def __str__(self):
         return f"""
         Fournisseur: {self.id}
-        Strategie: {self.strategy.__name__}
         Comportements: {self.behavior_list}
         Prix max: {self.limit_price_list}
         Nb offres max: {self.nb_max_offers}"""
@@ -244,15 +241,12 @@ class Buyer(Agent):
     def __init__(
         self,
         id,
-        strategy,
         behavior,
         nb_opponents,
         limit_price,
-        nb_max_offers=None,
+        nb_max_offers,
     ):
-        Agent.__init__(
-            self, id, strategy, behavior, nb_opponents, limit_price, nb_max_offers
-        )
+        Agent.__init__(self, id, behavior, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "B"
 
     def __str__(self):

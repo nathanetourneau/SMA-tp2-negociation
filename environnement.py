@@ -27,7 +27,6 @@ class Environment:
                     self.sellers_list.append(
                         Seller(
                             id,
-                            seller_dict["strategy"],
                             seller_dict["behavior"],
                             nb_buyers,
                             seller_dict["limit_price"],
@@ -38,7 +37,6 @@ class Environment:
                     self.buyers_list.append(
                         Buyer(
                             id,
-                            buyer_dict["strategy"],
                             buyer_dict["behavior"],
                             nb_sellers,
                             buyer_dict["limit_price"],
@@ -53,7 +51,6 @@ class Environment:
                 self.sellers_list = [
                     Seller(
                         i,
-                        gaussian,
                         behavior,
                         nb_buyers,
                         min_price,
@@ -62,17 +59,20 @@ class Environment:
                     for i in range(nb_sellers)
                 ]
                 self.buyers_list = [
-                    Buyer(i, gaussian, behavior, nb_sellers, max_price, nb_max_offers)
+                    Buyer(i, behavior, nb_sellers, max_price, nb_max_offers)
                     for i in range(nb_buyers)
                 ]
 
         elif strategy == "random":
+            min_price = random.randrange(90, 100)
+            max_price = random.randrange(90, 100)
+            nb_max_offers = random.randint(nb_rounds // 2, nb_rounds)
             self.sellers_list = [
-                SellerRandom(i, nb_buyers, random.randint(90, 100))
+                SellerRandom(i, nb_buyers, random.randint(90, 100), nb_max_offers)
                 for i in range(nb_sellers)
             ]
             self.buyers_list = [
-                BuyerRandom(i, nb_sellers, random.randint(90, 100))
+                BuyerRandom(i, nb_sellers, random.randint(90, 100), nb_max_offers)
                 for i in range(nb_buyers)
             ]
 

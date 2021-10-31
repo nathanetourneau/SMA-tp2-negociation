@@ -1,16 +1,16 @@
 class Offre:
-    def __init__(self, id, fournisseur_id, liste_negociateur_id, liste_prix=None):
+    def __init__(self, id, seller_id, buyers_id_list, price_list=None):
         self.id = id
-        self.fournisseur_id = fournisseur_id
-        self.liste_negociateur_id = liste_negociateur_id
-        if not liste_prix:
-            self.liste_prix = [None for i in range(len(liste_negociateur_id))]
+        self.seller_id = seller_id
+        self.buyers_id_list = buyers_id_list
+        if not price_list:
+            self.price_list = [None for i in range(len(buyers_id_list))]
         else:
-            self.liste_prix = liste_prix
-        self.liste_ancien_prix = [None for i in range(len(liste_negociateur_id))]
+            self.price_list = price_list
+        self.previous_price_list = [None for i in range(len(buyers_id_list))]
         self.deal = False
 
-    def update(self, negociateur_id, nouveau_prix: float, deal):
-        self.liste_ancien_prix[negociateur_id] = self.liste_prix[negociateur_id]
-        self.liste_prix[negociateur_id] = nouveau_prix
+    def update(self, buyer_id, new_price: float, deal):
+        self.previous_price_list[buyer_id] = self.price_list[buyer_id]
+        self.price_list[buyer_id] = new_price
         self.deal = deal

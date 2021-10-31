@@ -92,7 +92,7 @@ class Environment:
 
     def remove_buyer_from_offer(self, negociateur_id):
         for offre in self.liste_offres:
-            offre.liste_negociateur_id.remove(negociateur_id)
+            offre.buyers_id_list.remove(negociateur_id)
 
     def run(self):
         """
@@ -109,23 +109,23 @@ class Environment:
             logger.debug(f"---------- ROUND {round} ----------")
             for offre in self.liste_offres:
                 if not offre.deal:
-                    for negociateur_id in offre.liste_negociateur_id:
+                    for negociateur_id in offre.buyers_id_list:
                         negociateur = self.buyers_list[negociateur_id]
-                        nouveau_prix = offre.liste_prix[negociateur_id]
+                        nouveau_prix = offre.price_list[negociateur_id]
                         prix_offre, deal = negociateur.run(
-                            round, offre.fournisseur_id, nouveau_prix
+                            round, offre.seller_id, nouveau_prix
                         )
                         offre.update(negociateur_id, prix_offre, deal)
                         if deal:
-                            self.sellers_list[offre.fournisseur_id].deal = True
+                            self.sellers_list[offre.seller_id].deal = True
                             self.remove_buyer_from_offer(negociateur_id)
                             self.nb_rounds_before_deal.append(round)
                             break
                         logger.debug(
-                            f"N{negociateur.id} a proposé {prix_offre} pour F{offre.fournisseur_id}"
+                            f"N{negociateur.id} a proposé {prix_offre} pour F{offre.seller_id}"
                         )
-                        fournisseur = self.sellers_list[offre.fournisseur_id]
-                        nouveau_prix = offre.liste_prix[negociateur_id]
+                        fournisseur = self.sellers_list[offre.seller_id]
+                        nouveau_prix = offre.price_list[negociateur_id]
                         prix_offre, deal = fournisseur.run(
                             round, negociateur_id, nouveau_prix
                         )

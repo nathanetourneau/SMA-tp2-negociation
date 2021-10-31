@@ -74,24 +74,20 @@ class AgentRandom:
 
 class SellerRandom(AgentRandom):
     def __init__(self, id, nb_opponents, limit_price, nb_max_offers):
-        AgentRandom.__init__(self, id, nb_opponents, limit_price, nb_max_offers)
+        super().__init__(id, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "S"
 
     def run(self, current_round, opponent_id, price=None):
-        return AgentRandom._run(
-            self, current_round, opponent_id, price, self.agent_type
-        )
+        return self._run(current_round, opponent_id, price, self.agent_type)
 
 
 class BuyerRandom(AgentRandom):
     def __init__(self, id, nb_opponents, limit_price, nb_max_offers):
-        AgentRandom.__init__(self, id, nb_opponents, limit_price, nb_max_offers)
+        super().__init__(id, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "B"
 
     def run(self, current_round, opponent_id, price=None):
-        return AgentRandom._run(
-            self, current_round, opponent_id, price, self.agent_type
-        )
+        return self._run(current_round, opponent_id, price, self.agent_type)
 
 
 class Agent:
@@ -206,8 +202,8 @@ class SellerLinear(Agent):
 
     def run(self, current_round, opponent_id, price=None):
         if not price:
-            return super()._make_new_offer(opponent_id, self.agent_type), False
-        elif super()._is_satisfied(price, opponent_id, self.agent_type):
+            return self._make_new_offer(opponent_id, self.agent_type), False
+        elif self._is_satisfied(price, opponent_id, self.agent_type):
             logger.debug(f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}")
             self.deal = True
             return price, self.deal
@@ -229,12 +225,60 @@ class BuyerLinear(Agent):
 
     def run(self, current_round, opponent_id, price=None):
         if not price:
-            return super()._make_new_offer(opponent_id, self.agent_type), False
-        elif super()._is_satisfied(price, opponent_id, self.agent_type):
+            return self._make_new_offer(opponent_id, self.agent_type), False
+        elif self._is_satisfied(price, opponent_id, self.agent_type):
             logger.debug(f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}")
             self.deal = True
             return price, self.deal
         else:
+            return self._make_new_offer(opponent_id, self.agent_type), False
+
+
+class SellerWithBehavior(Agent):
+    def __init__(
+        self,
+        id,
+        behavior,
+        nb_opponents,
+        limit_price,
+        nb_max_offers,
+    ):
+        super().__init__(id, behavior, nb_opponents, limit_price, nb_max_offers)
+        self.agent_type = "S"
+
+    def run(self, current_round, opponent_id, price=None):
+        if not price:
+            return self._make_new_offer(opponent_id, self.agent_type), False
+        elif self._is_satisfied(price, opponent_id, self.agent_type):
+            logger.debug(f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}")
+            self.deal = True
+            return price, self.deal
+        else:
+            self._update_behavior(price, opponent_id, self.agent_type)
+            return self._make_new_offer(opponent_id, self.agent_type), False
+
+
+class BuyerWithBehavior(Agent):
+    def __init__(
+        self,
+        id,
+        behavior,
+        nb_opponents,
+        limit_price,
+        nb_max_offers,
+    ):
+        super().__init__(id, behavior, nb_opponents, limit_price, nb_max_offers)
+        self.agent_type = "B"
+
+    def run(self, current_round, opponent_id, price=None):
+        if not price:
+            return self._make_new_offer(opponent_id, self.agent_type), False
+        elif self._is_satisfied(price, opponent_id, self.agent_type):
+            logger.debug(f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}")
+            self.deal = True
+            return price, self.deal
+        else:
+            self._update_behavior(price, opponent_id, self.agent_type)
             return self._make_new_offer(opponent_id, self.agent_type), False
 
 

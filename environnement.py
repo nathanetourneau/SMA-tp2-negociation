@@ -21,7 +21,7 @@ class Environment:
         min_price = random.randrange(70, 130)
         max_price = random.randrange(70, 130)
         nb_max_offers = random.randint(nb_rounds // 2, nb_rounds)
-        if strategy == "complex":
+        if strategy == "complex+":
             behavior = "modere"
             self.sellers_list = [
                 Seller(
@@ -35,6 +35,23 @@ class Environment:
             ]
             self.buyers_list = [
                 Buyer(i, behavior, nb_sellers, max_price, nb_max_offers)
+                for i in range(nb_buyers)
+            ]
+
+        elif strategy == "complex":
+            behavior = "modere"
+            self.sellers_list = [
+                SellerWithBehavior(
+                    i,
+                    behavior,
+                    nb_buyers,
+                    min_price,
+                    nb_max_offers,
+                )
+                for i in range(nb_sellers)
+            ]
+            self.buyers_list = [
+                BuyerWithBehavior(i, behavior, nb_sellers, max_price, nb_max_offers)
                 for i in range(nb_buyers)
             ]
 

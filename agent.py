@@ -36,28 +36,16 @@ class AgentRandom:
         self.offers_price_list = [None for i in range(nb_opponents)]
 
     def _make_new_offer(self, opponent_id, agent_type):
-        if self.offers_price_list[opponent_id]:
-            if agent_type == "B":
-                self.offers_price_list[opponent_id] = random.uniform(
-                    self.offers_price_list[opponent_id],
-                    self.limit_price_list[opponent_id],
-                )
-            elif agent_type == "S":
-                self.offers_price_list[opponent_id] = random.uniform(
-                    self.limit_price_list[opponent_id],
-                    self.offers_price_list[opponent_id],
-                )
-        else:
-            if agent_type == "B":
-                self.offers_price_list[opponent_id] = random.uniform(
-                    0.8 * self.limit_price_list[opponent_id],
-                    self.limit_price_list[opponent_id],
-                )
-            elif agent_type == "S":
-                self.offers_price_list[opponent_id] = random.uniform(
-                    self.limit_price_list[opponent_id],
-                    1.2 * self.limit_price_list[opponent_id],
-                )
+        if agent_type == "B":
+            self.offers_price_list[opponent_id] = random.uniform(
+                0,
+                self.limit_price_list[opponent_id],
+            )
+        elif agent_type == "S":
+            self.offers_price_list[opponent_id] = random.uniform(
+                self.limit_price_list[opponent_id],
+                2 * self.limit_price_list[opponent_id],
+            )
         return self.offers_price_list[opponent_id]
 
     def _is_satisfied(self, price, opponent_id, agent_type):
@@ -68,14 +56,16 @@ class AgentRandom:
 
     def _run(self, current_round, opponent_id, price, agent_type):
         if not price:
-            a = self._make_new_offer(opponent_id, agent_type)
-            logger.info(a)
-            return (a, False)
+            return self._make_new_offer(opponent_id, agent_type), False
         elif self._is_satisfied(price, opponent_id, agent_type):
             if agent_type == "S":
-                print(f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}")
+                logger.debug(
+                    f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}"
+                )
             elif agent_type == "B":
-                print(f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}")
+                logger.debug(
+                    f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}"
+                )
             self.deal = True
             return price, self.deal
         else:
@@ -201,20 +191,51 @@ class Agent:
         elif agent_type == "B":
             return price <= self.limit_price_list[opponent_id]
 
-    def _run(self, current_round, opponent_id, price, agent_type):
+
+class SellerLinear(Agent):
+    def __init__(
+        self,
+        id,
+        behavior,
+        nb_opponents,
+        limit_price,
+        nb_max_offers,
+    ):
+        super().__init__(id, behavior, nb_opponents, limit_price, nb_max_offers)
+        self.agent_type = "S"
+
+    def run(self, current_round, opponent_id, price=None):
         if not price:
-            return self._make_new_offer(opponent_id, agent_type), False
-        elif self._is_satisfied(price, opponent_id, agent_type):
-            if agent_type == "S":
-                print(f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}")
-            elif agent_type == "B":
-                print(f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}")
+            return super()._make_new_offer(opponent_id, self.agent_type), False
+        elif super()._is_satisfied(price, opponent_id, self.agent_type):
+            logger.debug(f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}")
             self.deal = True
             return price, self.deal
         else:
-            self._update_behavior(price, opponent_id, agent_type)
-            self._update_limit_price(opponent_id, current_round, agent_type)
-            return self._make_new_offer(opponent_id, agent_type), False
+            return self._make_new_offer(opponent_id, self.agent_type), False
+
+
+class BuyerLinear(Agent):
+    def __init__(
+        self,
+        id,
+        behavior,
+        nb_opponents,
+        limit_price,
+        nb_max_offers,
+    ):
+        super().__init__(id, behavior, nb_opponents, limit_price, nb_max_offers)
+        self.agent_type = "B"
+
+    def run(self, current_round, opponent_id, price=None):
+        if not price:
+            return super()._make_new_offer(opponent_id, self.agent_type), False
+        elif super()._is_satisfied(price, opponent_id, self.agent_type):
+            logger.debug(f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}")
+            self.deal = True
+            return price, self.deal
+        else:
+            return self._make_new_offer(opponent_id, self.agent_type), False
 
 
 class Seller(Agent):
@@ -232,7 +253,16 @@ class Seller(Agent):
         Nb offres max: {self.nb_max_offers}"""
 
     def run(self, current_round, opponent_id, price=None):
-        return Agent._run(self, current_round, opponent_id, price, self.agent_type)
+        if not price:
+            return super()._make_new_offer(opponent_id, self.agent_type), False
+        elif super()._is_satisfied(price, opponent_id, self.agent_type):
+            logger.debug(f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}")
+            self.deal = True
+            return price, self.deal
+        else:
+            super()._update_behavior(price, opponent_id, self.agent_type)
+            super()._update_limit_price(opponent_id, current_round, self.agent_type)
+            return self._make_new_offer(opponent_id, self.agent_type), False
 
 
 class Buyer(Agent):
@@ -252,10 +282,18 @@ class Buyer(Agent):
     def __str__(self):
         return f"""
         Negociateur: {self.id}
-        Strategie: {self.strategy.__name__}
         Comportements: {self.behavior_list}
         Prix max: {self.limit_price_list}
         Nb offres max: {self.nb_max_offers}"""
 
     def run(self, current_round, opponent_id, price=None):
-        return Agent._run(self, current_round, opponent_id, price, self.agent_type)
+        if not price:
+            return super()._make_new_offer(opponent_id, self.agent_type), False
+        elif super()._is_satisfied(price, opponent_id, self.agent_type):
+            logger.debug(f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}")
+            self.deal = True
+            return price, self.deal
+        else:
+            super()._update_behavior(price, opponent_id, self.agent_type)
+            super()._update_limit_price(opponent_id, current_round, self.agent_type)
+            return self._make_new_offer(opponent_id, self.agent_type), False

@@ -2,7 +2,6 @@ import random
 import logging
 import scipy.stats as stats
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

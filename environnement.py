@@ -2,8 +2,8 @@ import random
 from agent import *
 from offre import Offre
 import logging
+import numpy as np
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
@@ -17,10 +17,12 @@ class Environment:
         sellers_dict_list=None,  # List of dicts
         buyers_dict_list=None,  # List of dicts
     ):
+        self.nb_rounds_before_deal = []
         self.nb_rounds = nb_rounds
         min_price = random.randrange(70, 130)
         max_price = random.randrange(70, 130)
-        nb_max_offers = random.randint(nb_rounds // 2, nb_rounds)
+        # nb_max_offers = random.randint(nb_rounds // 2, nb_rounds)
+        nb_max_offers = nb_rounds
         if strategy == "complex+":
             behavior = "modere"
             self.sellers_list = [
@@ -103,9 +105,8 @@ class Environment:
         If a deal happens, the offer is closed with the deal attribute switching to True,
         and the buyer is removed from all the other offers.
         """
-
         for round in range(self.nb_rounds):
-            # print(f"---------- ROUND {round} ----------")
+            logger.debug(f"---------- ROUND {round} ----------")
             for offre in self.liste_offres:
                 if not offre.deal:
                     for negociateur_id in offre.liste_negociateur_id:
@@ -118,6 +119,7 @@ class Environment:
                         if deal:
                             self.sellers_list[offre.fournisseur_id].deal = True
                             self.remove_buyer_from_offer(negociateur_id)
+                            self.nb_rounds_before_deal.append(round)
                             break
                         logger.debug(
                             f"N{negociateur.id} a proposé {prix_offre} pour F{offre.fournisseur_id}"
@@ -131,8 +133,14 @@ class Environment:
                         if deal:
                             self.buyers_list[negociateur_id].deal = True
                             self.remove_buyer_from_offer(negociateur_id)
+                            self.nb_rounds_before_deal.append(round)
                             break
                         logger.debug(
                             f"F{fournisseur.id} a proposé {prix_offre} pour N{negociateur_id}"
                         )
                         logger.debug("\n")
+
+    def average_nb_rounds_before_deal(self):
+        if not self.nb_rounds_before_deal:
+            return None
+        return np.average(self.nb_rounds_before_deal)

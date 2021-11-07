@@ -7,11 +7,11 @@ logger = logging.getLogger(__name__)
 
 behaviors_dict = {
     "intransigeant": {
-        "variation_rate_limit_price": 0.05,
+        "variation_rate_limit_price": 0.01,
         "new_offer_coefficient": 0.05,
     },
-    "modere": {"variation_rate_limit_price": 0.15, "new_offer_coefficient": 0.15},
-    "laxiste": {"variation_rate_limit_price": 0.30, "new_offer_coefficient": 0.30},
+    "modere": {"variation_rate_limit_price": 0.05, "new_offer_coefficient": 0.15},
+    "laxiste": {"variation_rate_limit_price": 0.10, "new_offer_coefficient": 0.30},
 }
 
 BLUE = "\033[94m"
@@ -43,7 +43,7 @@ class AgentRandom:
         elif agent_type == "S":
             self.offers_price_list[opponent_id] = random.uniform(
                 self.limit_price_list[opponent_id],
-                2 * self.limit_price_list[opponent_id],
+                3 * self.limit_price_list[opponent_id],
             )
         return self.offers_price_list[opponent_id]
 
@@ -58,13 +58,9 @@ class AgentRandom:
             return self._make_new_offer(opponent_id, agent_type), False
         elif self._is_satisfied(price, opponent_id, agent_type):
             if agent_type == "S":
-                logger.debug(
-                    f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}"
-                )
+                print(f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}")
             elif agent_type == "B":
-                logger.debug(
-                    f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}"
-                )
+                print(f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}")
             self.deal = True
             return price, self.deal
         else:
@@ -75,6 +71,7 @@ class SellerRandom(AgentRandom):
     def __init__(self, id, nb_opponents, limit_price, nb_max_offers):
         super().__init__(id, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "S"
+        print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):
         return self._run(current_round, opponent_id, price, self.agent_type)
@@ -84,6 +81,7 @@ class BuyerRandom(AgentRandom):
     def __init__(self, id, nb_opponents, limit_price, nb_max_offers):
         super().__init__(id, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "B"
+        print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):
         return self._run(current_round, opponent_id, price, self.agent_type)
@@ -92,10 +90,7 @@ class BuyerRandom(AgentRandom):
 class Agent:
     def __init__(self, id, behavior, nb_opponents, limit_price, nb_max_offers):
         self.id = id
-        self.behavior_list = [
-            behavior for i in range(nb_opponents)
-        ]  # strings - key of the dictionnary
-        # self.liste_offres = None  # list of offres objects
+        self.behavior_list = [behavior for i in range(nb_opponents)]
         self.offers_price_list = [None for i in range(nb_opponents)]
         self.nb_max_offers = nb_max_offers
         self.deal = False
@@ -118,15 +113,13 @@ class Agent:
             threshold_behavior = delta_price / limit_price
             if 0 < threshold_behavior <= 0.1:
                 self.behavior_list[opponent_id] = "laxiste"
-                logger.debug(f"{agent_type}{self.id} passe de {behavior} à laxiste")
+                print(f"{agent_type}{self.id} passe de {behavior} à laxiste")
             elif 0.1 < threshold_behavior <= 0.2:
                 self.behavior_list[opponent_id] = "modere"
-                logger.debug(f"{agent_type}{self.id} passe de {behavior} à modere")
+                print(f"{agent_type}{self.id} passe de {behavior} à modere")
             elif 0.2 < threshold_behavior:
                 self.behavior_list[opponent_id] = "intransigeant"
-                logger.debug(
-                    f"{agent_type}{self.id} passe de {behavior} à intransigeant"
-                )
+                print(f"{agent_type}{self.id} passe de {behavior} à intransigeant")
 
     def _update_limit_price(self, opponent_id, current_round, agent_type):
         behavior = self.behavior_list[opponent_id]
@@ -162,7 +155,7 @@ class Agent:
                 self.offers_price_list[
                     opponent_id
                 ] = offer_price - new_offer_coefficient * (offer_price - min_price)
-            logger.debug(f"Prix min F{self.id} : {min_price}")
+            print(f"Min price S{self.id} : {min_price:.2f}")
         elif agent_type == "B":
             max_price = self.limit_price_list[opponent_id]
             if not offer_price:
@@ -177,7 +170,7 @@ class Agent:
                 self.offers_price_list[
                     opponent_id
                 ] = offer_price + new_offer_coefficient * (max_price - offer_price)
-            logger.debug(f"Prix max N{self.id} : {max_price}")
+            print(f"Max price B{self.id} : {max_price:.2f}")
         return self.offers_price_list[opponent_id]
 
     def _is_satisfied(self, price, opponent_id, agent_type):
@@ -198,12 +191,13 @@ class SellerLinear(Agent):
     ):
         super().__init__(id, behavior, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "S"
+        print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):
         if not price:
             return self._make_new_offer(opponent_id, self.agent_type), False
         elif self._is_satisfied(price, opponent_id, self.agent_type):
-            logger.debug(f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}")
+            print(f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}")
             self.deal = True
             return price, self.deal
         else:
@@ -221,12 +215,13 @@ class BuyerLinear(Agent):
     ):
         super().__init__(id, behavior, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "B"
+        print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):
         if not price:
             return self._make_new_offer(opponent_id, self.agent_type), False
         elif self._is_satisfied(price, opponent_id, self.agent_type):
-            logger.debug(f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}")
+            print(f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}")
             self.deal = True
             return price, self.deal
         else:
@@ -244,12 +239,13 @@ class SellerWithBehavior(Agent):
     ):
         super().__init__(id, behavior, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "S"
+        print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):
         if not price:
             return self._make_new_offer(opponent_id, self.agent_type), False
         elif self._is_satisfied(price, opponent_id, self.agent_type):
-            logger.debug(f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}")
+            print(f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}")
             self.deal = True
             return price, self.deal
         else:
@@ -268,12 +264,13 @@ class BuyerWithBehavior(Agent):
     ):
         super().__init__(id, behavior, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "B"
+        print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):
         if not price:
             return self._make_new_offer(opponent_id, self.agent_type), False
         elif self._is_satisfied(price, opponent_id, self.agent_type):
-            logger.debug(f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}")
+            print(f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}")
             self.deal = True
             return price, self.deal
         else:
@@ -287,19 +284,13 @@ class Seller(Agent):
     def __init__(self, id, behavior, nb_opponents, limit_price, nb_max_offers):
         Agent.__init__(self, id, behavior, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "S"
-
-    def __str__(self):
-        return f"""
-        Fournisseur: {self.id}
-        Comportements: {self.behavior_list}
-        Prix max: {self.limit_price_list}
-        Nb offres max: {self.nb_max_offers}"""
+        print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):
         if not price:
             return super()._make_new_offer(opponent_id, self.agent_type), False
         elif super()._is_satisfied(price, opponent_id, self.agent_type):
-            logger.debug(f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}")
+            print(f"{BLUE}Deal between S{self.id} and B{opponent_id}!{RESET}")
             self.deal = True
             return price, self.deal
         else:
@@ -321,19 +312,13 @@ class Buyer(Agent):
     ):
         Agent.__init__(self, id, behavior, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "B"
-
-    def __str__(self):
-        return f"""
-        Negociateur: {self.id}
-        Comportements: {self.behavior_list}
-        Prix max: {self.limit_price_list}
-        Nb offres max: {self.nb_max_offers}"""
+        print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):
         if not price:
             return super()._make_new_offer(opponent_id, self.agent_type), False
         elif super()._is_satisfied(price, opponent_id, self.agent_type):
-            logger.debug(f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}")
+            print(f"{GREEN}Deal between B{self.id} and S{opponent_id}!{RESET}")
             self.deal = True
             return price, self.deal
         else:

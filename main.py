@@ -20,9 +20,9 @@ STRATEGY can be :
 - mixed for 4*N sellers and 4*M buyers (N & M of each strategy) PLESE SPECIFY A MULTIPLE OF 4 FOR NB_BUYERS AND NB_SELLERS
 """
 ##### PARAMETERS #####
-STRATEGY = "random"
-NB_SELLERS = 5
-NB_BUYERS = 5
+STRATEGY = "mixed"
+NB_SELLERS = 20
+NB_BUYERS = 20
 NB_ROUNDS = 10
 ######################
 
@@ -38,20 +38,21 @@ def run_negotiations(strategy, nb_sellers, nb_buyers, nb_rounds):
             nb_deals += 1
     metrics = env.env_metrics()
 
-    print(
-        f"\33[31m{2*len(metrics.deals['couples'])} DEALS OUT OF {NB_BUYERS+NB_SELLERS} AGENTS\033[0m"
-    )
-
-    return metrics.deals["strategies"]
+    return metrics.deals
 
 
 def run_multiple_negotiations(strategy, nb_sellers, nb_buyers, nb_rounds, plot=True):
     """Performs multiple negotiations between a given number of agents and a given strategy. Returns the metrics counting the deals for each agent."""
     strategies_with_deal = []
-    for k in range(1000):
-        strategies_with_deal += run_negotiations(
-            strategy, nb_sellers, nb_buyers, nb_rounds
-        )
+    nb_deals = 0
+    nb_tests = 1000
+    for k in range(nb_tests):
+        metrics_deals = run_negotiations(strategy, nb_sellers, nb_buyers, nb_rounds)
+        nb_deals += 2 * len(metrics_deals["couples"])
+        strategies_with_deal += metrics_deals["strategies"]
+    print(
+        f"\33[31m{nb_deals} DEALS OUT OF {(NB_BUYERS+NB_SELLERS)*nb_tests} AGENTS\033[0m"
+    )
     if plot:
         plot_histogram_from_string_list(strategies_with_deal)
 
@@ -141,9 +142,9 @@ def deal_rate_between_two_agents(strategy):
 
 
 if __name__ == "__main__":
-    run_negotiations(STRATEGY, NB_SELLERS, NB_BUYERS, NB_ROUNDS)
+    # run_negotiations(STRATEGY, NB_SELLERS, NB_BUYERS, NB_ROUNDS)
 
-    # run_multiple_negotiations(STRATEGY, NB_SELLERS, NB_BUYERS, NB_ROUNDS)
+    run_multiple_negotiations(STRATEGY, NB_SELLERS, NB_BUYERS, NB_ROUNDS)
 
     # run_negotiation_between_two_agents(STRATEGY, NB_ROUNDS, plot=False)
 

@@ -71,6 +71,7 @@ class SellerRandom(AgentRandom):
     def __init__(self, id, nb_opponents, limit_price, nb_max_offers):
         super().__init__(id, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "S"
+        self.strategy = "random"
         print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):
@@ -81,6 +82,7 @@ class BuyerRandom(AgentRandom):
     def __init__(self, id, nb_opponents, limit_price, nb_max_offers):
         super().__init__(id, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "B"
+        self.strategy = "random"
         print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):
@@ -191,6 +193,7 @@ class SellerLinear(Agent):
     ):
         super().__init__(id, behavior, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "S"
+        self.strategy = "linear"
         print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):
@@ -215,6 +218,7 @@ class BuyerLinear(Agent):
     ):
         super().__init__(id, behavior, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "B"
+        self.strategy = "linear"
         print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):
@@ -239,6 +243,7 @@ class SellerWithBehavior(Agent):
     ):
         super().__init__(id, behavior, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "S"
+        self.strategy = "behavior"
         print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):
@@ -264,6 +269,7 @@ class BuyerWithBehavior(Agent):
     ):
         super().__init__(id, behavior, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "B"
+        self.strategy = "behavior"
         print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):
@@ -284,6 +290,7 @@ class Seller(Agent):
     def __init__(self, id, behavior, nb_opponents, limit_price, nb_max_offers):
         Agent.__init__(self, id, behavior, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "S"
+        self.strategy = "gaussian"
         print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):
@@ -312,6 +319,7 @@ class Buyer(Agent):
     ):
         Agent.__init__(self, id, behavior, nb_opponents, limit_price, nb_max_offers)
         self.agent_type = "B"
+        self.strategy = "gaussian"
         print(f"Limit price {self.agent_type}{id} : {limit_price:.2f}")
 
     def run(self, current_round, opponent_id, price=None):

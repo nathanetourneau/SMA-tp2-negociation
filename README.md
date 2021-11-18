@@ -1,4 +1,4 @@
-# SMA-TP2-negociation
+# SMA TP2 : Multi-agents negotiation
 
 **Authors** : [@paulflagel](https://github.com/paulflagel/), [@nathanetourneau](https://github.com/nathanetourneau)
 
